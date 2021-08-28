@@ -26,6 +26,7 @@ export default function Home() {
           setPhoneValidation(true)
         }else{
           setPhoneError("Please enter valid indian phone")
+          setTimeout(()=>{setPhoneError("")},1300)
         }
       }
       setDefaultPhone(phone)
@@ -71,6 +72,7 @@ export default function Home() {
           setTimeout(()=>{setHideOtp(true)},3000)
         }else{
           setOtpError("Entered Otp is invalid")
+          setTimeout(()=>{setOtpError("")},1300)
         }
       }
       setDefaultOtp(otp)
