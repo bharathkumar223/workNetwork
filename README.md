@@ -1,2 +1,1 @@
-# workNetwork
-Take home project of work network
+This is take home assignment of work network
