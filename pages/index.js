@@ -1,6 +1,11 @@
 import Head from 'next/head'
-import validator from 'validator' 
-import { useState } from 'react'
+import { useState,useEffect } from 'react'
+import { isValidPhoneNumber } from 'libphonenumber-js'
+
+const countryCodes = require('country-codes-list')
+const myCountryCodesObject = countryCodes.customList('countryNameEn', 
+                                                     '{countryNameEn}:{countryCode}: +{countryCallingCode}')
+
 
 export default function Home() {
   const [phoneValidation, setPhoneValidation] = useState(false)
@@ -10,56 +15,138 @@ export default function Home() {
   const [hideOtp,setHideOtp] = useState(false)
   const [defaultPhone,setDefaultPhone] = useState("")
   const [defaultOtp,setDefaultOtp] = useState("")
+  const [countryCode,setCountryCode] = useState([])
+  const [optionValue, setOptionValue] = useState("");
+
+  useEffect(() => {
+    setCountryCode(Object.values(myCountryCodesObject))
+    return () => {
+    }
+  }, [])
 
   function validatePhoneNumber (number) {
-    const isValidPhoneNumber = validator.isMobilePhone(number,['hi-IN','bn-IN','en-IN'],'+91')
-    return (isValidPhoneNumber)
+    return isValidPhoneNumber(number, optionValue.split(':')[1]) === true
    }
 
   function ProcessPhoneNumber() {
+    
     const registerUser = event => {
       event.preventDefault() 
       var phone = event.target.name.value;
       if (typeof phone !== "undefined") {
         if(validatePhoneNumber(phone)){
-          setPhoneError("")
-          setPhoneValidation(true)
+          setPhoneError("...Sending OTP to "+phone)
+          setTimeout(()=>{
+            setPhoneError("")
+            setPhoneValidation(true)
+          },2000)
         }else{
-          setPhoneError("Please enter valid indian phone")
-          setTimeout(()=>{setPhoneError("")},1300)
+          setPhoneError("Please provide a valid mobile number")
+          setTimeout(()=>{setPhoneError("")},1500)
         }
       }
       setDefaultPhone(phone)
     }
-  
+    const handleSelect = (e) => {
+      console.log(e.target.value);
+      setOptionValue(e.target.value);
+    };
+
+    const splitInfo = (info,index) => {
+      return info.split(":")[index]
+    }
+
     return (
       <form onSubmit={registerUser}>
-        <label style={{marginLeft:'474px'}} htmlFor="name">Phone Number  </label>
-        <input id="name"   
-               defaultValue={defaultPhone} 
-               type="phone" 
-               style={{marginLeft:'2vw'}} 
-               autoComplete="name" 
-               required/>
-        <button  className = "btn" 
-                 type="submit" 
-                 style={{marginLeft:'610px',marginTop:'3vh',
-                        backgroundColor:'#0070f3',
-                        color:'white',
-                        border:"none",
-                        padding:'10px',
-                        fontFamily:'sans-serif',
-                        borderRadius:'4px',
-                        cursor:'pointer',
-                        }}
-                  >Sign Up Mobile</button>
-        <h4 style={{color:'red',marginLeft:'610px'}}>{phoneError}</h4>
+        <div className="phone-validation">
+          <select className="phone-select" onChange={handleSelect} value={optionValue}>
+          <option className="phone-option">select your country</option>
+          {countryCode.map((country, index) =>
+                  <option
+                    key={index}
+                    value={country}
+                    >{splitInfo(country,0)+' ('+splitInfo(country,2)+')'}</option>
+                )}
+          </select>
+        </div>
+        {optionValue?<>
+          <input id="name"   
+                defaultValue={defaultPhone} 
+                type="phone" 
+                autoComplete="name" 
+                placeholder="Enter the phone number"
+                required/>
+          <button  className = "btn" 
+                   type="submit">Send OTP</button>
+          <h4>{phoneError}</h4>
+        </>:null}
+        <style jsx>{`
+          div.form
+          {
+              display: block;
+              text-align: center;
+          }
+          form
+          {
+              display: inline-block;
+              margin-left: auto;
+              margin-right: auto;
+              text-align: center;
+              
+          }
+         .phone-select{
+            max-width: 50%;
+            height: 100%;
+            padding: 3rem;
+            margin-bottom: 1rem;
+            margin: 20px;
+            width: 850px;
+            padding: 5px 35px 5px 5px;
+            font-size: 16px;
+            border: 1px solid #CCC;
+            height: 34px;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            cursor:pointer;
+            border-radius:3px;
+         }
+         input{
+            max-width: 50%;
+            height: 100%;
+            padding: 3rem;
+            margin-bottom: 1rem;
+            margin: 10px;
+            width: 220px;
+            padding: 5px 35px 5px 5px;
+            font-size: 16px;
+            border: 1px solid #CCC;
+            border-radius:3px;
+            height: 34px;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+         }
+         .btn{
+            background-color:#0070f3;
+            color:white;
+            border:none;
+            padding:10px;
+            font-family:sans-serif;
+            border-radius:4px;
+            cursor:pointer;
+         }
+         h4{
+          color:#0070f3;
+          text-align:center
+         }
+        `}</style>
       </form>
     )
   }
 
   function OtpValidate() {
-
+    
     const validateOtp = event => {
       event.preventDefault()
       var otp = event.target.otp.value;
@@ -97,18 +184,23 @@ export default function Home() {
                maxLength = "4" 
                onInput={maxLengthCheck}/><br/><br/></>}
         {otpValidation?"":<>
-          <button type="submit" 
-                  style={{marginLeft:'8vw',marginTop:'3vh',
-                          backgroundColor:'#0070f3',
-                          color:'white',
-                          border:"none",
-                          padding:'4%',
-                          fontFamily:'sans-serif',
-                          borderRadius:'4px',
-                          cursor:'pointer'}}>Validate OTP</button>
+          <button type="submit">Validate OTP</button>
           <h4 style={{color:'red',marginLeft:'8vw'}}>{otpError}</h4>
         </>}
           {otpValidation?<LoginSuccess/>:""}
+          <style>{`
+            button{
+              margin-left:8vw;
+              margin-top:3vh;
+              background-color:#0070f3;
+              color:white;
+              border:none;
+              padding:4%;
+              font-family:sans-serif;
+              border-radius:4px;
+              cursor:pointer
+            }
+          `}</style>
         </form>
     )
   }
@@ -148,6 +240,7 @@ export default function Home() {
       </footer>
 
       <style jsx>{`
+         
         .container {
           min-height: 100vh;
           padding: 0 0.5rem;
